@@ -23,4 +23,4 @@ h1,h2,h3,h4{color:#101d38}button:focus-visible,a:focus-visible,input:focus-visib
 @media(max-width:767px){.connection-toolbar,.shared-toolbar{align-items:flex-start;flex-direction:column}}
 
 /* Approved taskbloc identity: teal, pink and yellow stacked blocks. */
-.logo-row .brand{display:flex;min-width:0;gap:0;line-height:1}.taskbloc-logo{display:block;width:180px;max-width:100%;height:auto}.logo-row .sidebar-collapse{flex-shrink:0}.connection-toolbar>p{color:#536b8d}
+.logo-row .brand{display:flex;min-width:0;gap:0;line-height:1}.taskbloc-logo{display:block;width:144px;max-width:100%;height:auto}.logo-row .sidebar-collapse{flex-shrink:0}.connection-toolbar>p{color:#536b8d}
