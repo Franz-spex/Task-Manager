@@ -1,0 +1,15 @@
+# Copy to .env.local and replace the public configuration values.
+# The real API key must be provisioned securely; never put it in browser code.
+TASKLINE_AUTH_ISSUER=https://YOUR-TENANT.auth0.com/
+TASKLINE_AUTH_CLIENT_ID=YOUR_WEB_APPLICATION_CLIENT_ID
+TASKLINE_PUBLIC_URL=https://YOUR-BACKEND-DOMAIN
+TASKLINE_WEB_ORIGIN=http://localhost:5173
+TASKLINE_ALLOWED_SUBJECTS=auth0|YOUR_USER_ID
+TASKLINE_DATABASE=.taskline/tasks.sqlite
+TASKLINE_API_PORT=8788
+TASKLINE_BIND=127.0.0.1
+OPENAI_MODEL=gpt-4o-mini
+# OPENAI_API_KEY is deliberately omitted. Complete secure key setup separately.
+
+# Live AI stays paused until explicitly enabled. No key is needed for MCP.
+TASKLINE_AI_ENABLED=false

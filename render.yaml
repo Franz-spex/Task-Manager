@@ -1,0 +1,35 @@
+# Review the selected paid service and disk before deploying this Blueprint.
+services:
+  - type: web
+    name: taskline
+    runtime: node
+    plan: 0.5c-512mb
+    numInstances: 1
+    buildCommand: npm run install:ci && npm run build:host
+    startCommand: npm run start:host
+    healthCheckPath: /healthz
+    disk:
+      name: taskline-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.0
+      - key: TASKLINE_BIND
+        value: 0.0.0.0
+      - key: TASKLINE_DATABASE
+        value: /var/data/tasks.sqlite
+      - key: TASKLINE_AUTH_ISSUER
+        sync: false
+      - key: TASKLINE_AUTH_CLIENT_ID
+        sync: false
+      - key: TASKLINE_PUBLIC_URL
+        sync: false
+      - key: TASKLINE_WEB_ORIGIN
+        sync: false
+      - key: TASKLINE_ALLOWED_SUBJECTS
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
