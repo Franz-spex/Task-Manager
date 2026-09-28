@@ -15,7 +15,7 @@ Requires Node.js 22.13 or newer. Open **http://localhost:5173** and keep the ter
 
 ## GitHub and Vercel
 
-The Vercel build runs the browser workspace and demo assistant, with live AI paused. See [VERCEL.md](VERCEL.md). It does not deploy the shared SQLite backend or MCP endpoint.
+The Vercel build deploys the website and protected API/MCP routes. Without a configured Postgres database it keeps browser storage and the demo assistant. Follow [VERCEL.md](VERCEL.md) and [POSTGRES-SETUP.md](POSTGRES-SETUP.md) to activate durable shared storage and Auth0. Live AI stays paused.
 
 ## Permanent hosting
 
@@ -29,8 +29,8 @@ Run `npm run build:host` and `npm run start:host` to serve the interface, protec
 | Demo assistant | Working local rules, explicitly labeled; no API calls |
 | Live in-app assistant | Responses API endpoint implemented; paused by default; requires `TASKLINE_AI_ENABLED=true`, funded API access and sign-in configuration |
 | External ChatGPT MCP | Five working tools with Streamable HTTP; needs OAuth configuration and reachable HTTPS deployment |
-| Shared tasks | Persistent SQLite, account isolation, permission checks, conflict detection, retry protection, and Undo |
-| Public hosting | Not deployed by this delivery |
+| Shared tasks | Postgres on Vercel or SQLite locally; account isolation, permission checks, conflict detection, retry protection, and Undo |
+| Public hosting | Browser app at https://task-manager-spex3.vercel.app; hosted shared connection requires database and OAuth activation |
 
 Open **Settings → Integrations** for actual connection status. Follow **[CONNECTOR-SETUP.md](CONNECTOR-SETUP.md)** to activate both integrations. No API keys, OAuth credentials, or private task databases are bundled.
 

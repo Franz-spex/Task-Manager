@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { taskSchema } from '../lib/taskline.ts';
-import { HttpError } from './store.mjs';
+import { HttpError } from './store-contract.mjs';
 
 const string = { type: 'string' };
 const object = properties => ({ type: 'object', additionalProperties: false, properties, required: Object.keys(properties) });

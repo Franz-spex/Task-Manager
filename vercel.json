@@ -3,5 +3,14 @@
   "framework": "vite",
   "installCommand": "npm ci --include=dev --include=optional",
   "buildCommand": "npm run build:vercel",
-  "outputDirectory": "dist/web"
+  "outputDirectory": "dist/web",
+  "functions": { "api/backend.ts": { "maxDuration": 60 } },
+  "rewrites": [
+    { "source": "/api/taskline/config", "destination": "/api/backend?taskblocRoute=config" },
+    { "source": "/api/taskline/store", "destination": "/api/backend?taskblocRoute=store" },
+    { "source": "/api/taskline/plan", "destination": "/api/backend?taskblocRoute=plan" },
+    { "source": "/mcp", "destination": "/api/backend?taskblocRoute=mcp" },
+    { "source": "/.well-known/oauth-protected-resource", "destination": "/api/backend?taskblocRoute=metadata" },
+    { "source": "/.well-known/oauth-protected-resource/mcp", "destination": "/api/backend?taskblocRoute=metadata" }
+  ]
 }

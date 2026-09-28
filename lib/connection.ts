@@ -8,13 +8,13 @@ declare const __TASKBLOC_BROWSER_ONLY__: boolean;
 export async function getConfig():Promise<ConnectionConfig> {
   if (typeof __TASKBLOC_BROWSER_ONLY__ !== 'undefined' && __TASKBLOC_BROWSER_ONLY__) return {authReady:false,aiReady:false,aiPaused:true,browserOnly:true,issuer:'',clientId:'',resource:'',model:'',missing:['Hosted shared backend']};
   const response = await fetch('/api/taskline/config');
-  if (!response.ok) throw new Error('Start the taskbloc backend with npm run backend, then check the connection again.');
+  if (!response.ok) throw new Error('The shared connection is unavailable. Your browser tasks are still saved on this device. Try checking the connection again shortly.');
   return response.json();
 }
 function makeClient(config:ConnectionConfig) {
   if (!config.authReady) throw new Error('Complete the connection settings before signing in.');
   client = new Auth0Client({ domain:new URL(config.issuer).host, clientId:config.clientId,
-    authorizationParams:{ audience:config.resource, scope:'openid profile tasks:read tasks:write ai:plan', redirect_uri:window.location.origin },
+    authorizationParams:{ audience:config.resource, scope:'openid profile tasks:read tasks:write'+(config.aiReady?' ai:plan':''), redirect_uri:window.location.origin },
     cacheLocation:'memory', useRefreshTokens:false });
   return client;
 }

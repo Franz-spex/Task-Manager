@@ -2,7 +2,7 @@ import express from 'express';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { z } from 'zod';
-import { TaskStore, HttpError } from './store.mjs';
+import { HttpError } from './store-contract.mjs';
 import { generatePlan } from './planner.mjs';
 import { createMcp } from './mcp.mjs';
 import { storeSchema } from '../lib/taskline.ts';
@@ -23,7 +23,10 @@ export function configuration(env = process.env) {
 export function createApp(config, options = {}) {
   const app = express();
   app.disable('x-powered-by');
-  const store = options.store || new TaskStore(config.database);
+  // Storage is supplied explicitly; serverless deployments must never silently
+  // fall back to a temporary SQLite file.
+  const store = options.store ?? null;
+  const authReady = config.authReady && !!store;
   const jwks = options.jwks || (config.issuer ? createRemoteJWKSet(new URL('.well-known/jwks.json', config.issuer)) : null);
   const verify = options.verify || (async token => {
     const { payload } = await jwtVerify(token, jwks, { issuer: config.issuer, audience: config.resource, algorithms: ['RS256'], requiredClaims: ['sub', 'exp', 'iat'] });
@@ -44,15 +47,16 @@ export function createApp(config, options = {}) {
   });
   app.use(express.json({ limit: '2mb' }));
   app.get('/api/taskline/config', (_req, res) => res.json({
-    authReady: config.authReady, aiReady: config.aiEnabled === true && config.authReady && !!config.key, aiPaused: config.aiEnabled !== true, issuer: config.issuer, clientId: config.clientId,
+    authReady, browserOnly: !store, aiReady: config.aiEnabled === true && authReady && !!config.key, aiPaused: config.aiEnabled !== true, issuer: config.issuer, clientId: config.clientId,
     resource: config.resource, model: config.model,
-    missing: [!config.issuer && 'OAuth issuer', !config.clientId && 'Web sign-in client', !config.resource && 'Public HTTPS endpoint', !config.users.length && 'Workspace member', !config.key && 'OpenAI API key'].filter(Boolean)
+    missing: [!store && 'Hosted database', !config.issuer && 'OAuth issuer', !config.clientId && 'Web sign-in client', !config.resource && 'Public HTTPS endpoint', !config.users.length && 'Workspace member', config.aiEnabled === true && !config.key && 'OpenAI API key'].filter(Boolean)
   }));
-  app.get('/.well-known/oauth-protected-resource', (_req, res) => config.authReady
+  app.get(['/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp'], (_req, res) => authReady
     ? res.json({ resource: config.resource, authorization_servers: [config.issuer], scopes_supported: ['tasks:read', 'tasks:write'], bearer_methods_supported: ['header'] })
     : res.status(503).json({ error: 'Connector authentication is not configured.' }));
   const challenge = `Bearer resource_metadata="${config.resource ? new URL('/.well-known/oauth-protected-resource', config.resource).href : ''}"`;
   async function authenticate(req, res, next) {
+    if (!store) return res.status(503).json({ error: 'Shared storage is not configured yet. Your browser tasks remain on this device.' });
     if (!config.authReady) return res.status(503).json({ error: 'Configure the OAuth provider and workspace membership first.' });
     try {
       const match = /^Bearer (\S+)$/.exec(req.get('authorization') || '');
@@ -81,15 +85,15 @@ export function createApp(config, options = {}) {
     if (bucket.count > 10) return next(new HttpError(429, 'Please wait a minute before asking for another plan.'));
     next();
   }
-  app.get('/api/taskline/store', authenticate, requireScope('tasks:read'), (req, res) => res.json(store.read(req.owner)));
-  app.put('/api/taskline/store', authenticate, requireScope('tasks:write'), (req, res) => {
+  app.get('/api/taskline/store', authenticate, requireScope('tasks:read'), async (req, res) => res.json(await store.read(req.owner)));
+  app.put('/api/taskline/store', authenticate, requireScope('tasks:write'), async (req, res) => {
     const input = z.object({ revision: z.number().int().nonnegative(), store: storeSchema, requestId: z.string().uuid() }).parse(req.body);
-    res.json(store.save(req.owner, input.revision, input.store, input.requestId));
+    res.json(await store.save(req.owner, input.revision, input.store, input.requestId));
   });
   app.post('/api/taskline/plan', authenticate, requireScope('ai:plan'), limit, async (req, res) => {
     if (config.aiEnabled !== true) throw new HttpError(503, 'Live AI is paused. Use the demo assistant for now.');
     const input = z.object({ prompt: z.string().trim().min(1).max(6000), revision: z.number().int().nonnegative(), today: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).parse(req.body);
-    const snapshot = store.read(req.owner);
+    const snapshot = await store.read(req.owner);
     if (snapshot.revision !== input.revision) throw new HttpError(409, 'The shared board changed. Refresh it before planning.');
     res.json(await generatePlan({ key: config.key, model: config.model, prompt: input.prompt, today: input.today, tasks: snapshot.store.tasks }, options.fetcher));
   });

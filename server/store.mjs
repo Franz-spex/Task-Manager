@@ -4,9 +4,8 @@ import { dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { storeSchema } from '../lib/taskline.ts';
 
-export class HttpError extends Error {
-  constructor(status, message) { super(message); this.status = status; }
-}
+import { HttpError, validateStore } from './store-contract.mjs';
+export { HttpError } from './store-contract.mjs';
 
 // Each authenticated subject owns a separate personal workspace. Client-supplied
 // workspace IDs never select a database partition.
@@ -25,12 +24,7 @@ export class TaskStore {
       : { revision: 0, store: { version: 1, name: 'Kent', tasks: [], applied: [] } };
   }
   save(owner, revision, input, requestId, inTransaction = false) {
-    const store = storeSchema.parse(input);
-    if (store.tasks.length > 2000 || new Set(store.tasks.map(t => t.id)).size !== store.tasks.length)
-      throw new HttpError(400, 'Task IDs must be unique; a workspace supports up to 2,000 tasks.');
-    const ids = new Set(store.tasks.map(t => t.id));
-    if (store.tasks.some(t => t.dependencies.some(id => !ids.has(id) || id === t.id)))
-      throw new HttpError(400, 'Dependencies must refer to other tasks in this workspace.');
+    const store = validateStore(input);
     if (!inTransaction) this.db.exec('BEGIN IMMEDIATE');
     try {
       const receipt = this.db.prepare('SELECT body FROM receipts WHERE owner=? AND request_id=?').get(owner, requestId);

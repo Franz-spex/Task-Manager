@@ -1,4 +1,6 @@
-# Activate Taskline connections
+# Activate taskbloc connections
+
+For the Vercel deployment with durable Postgres, follow [POSTGRES-SETUP.md](POSTGRES-SETUP.md). The SQLite instructions below apply to a local or persistent-disk backend. Paid in-app AI remains paused until explicitly enabled with `TASKLINE_AI_ENABLED=true`.
 
 The code is implemented. A live connection still needs your OAuth tenant, public HTTPS backend, permitted user, and (for in-app AI only) an OpenAI API key. No accounts, keys, or public deployments are included in this archive.
 
@@ -18,7 +20,7 @@ Set up these project-specific values:
 | API permissions | `tasks:read`, `tasks:write`, `ai:plan` |
 | Browser application | Single Page Application, authorization code with PKCE |
 | Browser callback, logout URL and web origin | `http://localhost:5173` for local development; your frontend origin for deployment |
-| Browser token scopes | All three Taskline permissions |
+| Browser token scopes | `tasks:read` and `tasks:write`; `ai:plan` only when live AI is ready |
 | ChatGPT token scopes | `tasks:read` and `tasks:write` |
 | Workspace membership | Your Auth0 user ID (`sub`), copied into `TASKLINE_ALLOWED_SUBJECTS` |
 
